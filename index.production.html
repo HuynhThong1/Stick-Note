@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PDF Sticky‑Note Annotator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Configure API URL for production deployment -->
+  <script>
+    // Set the PUBLIC_API_URL to your deployed backend URL
+    window.PUBLIC_API_URL = 'https://your-backend-api.herokuapp.com';
+    // Example URLs:
+    // window.PUBLIC_API_URL = 'https://my-nestjs-api.railway.app';
+    // window.PUBLIC_API_URL = 'https://stick-note-api.vercel.app';
+    // window.PUBLIC_API_URL = 'https://api.yourdomain.com';
+  </script>
+  
+  <script src="config.js"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+  <!-- Rest of the HTML content is the same as index.html -->
+  <!-- This is just an example showing how to configure the API URL -->
+  <div class="mx-auto max-w-3xl px-4 py-10">
+    <div class="mb-8 text-center">
+      <h1 class="text-3xl font-semibold text-slate-800">PDF Sticky‑Note Annotator (Production)</h1>
+      <p class="mt-2 text-slate-600">This example shows how to configure API URL for production deployment.</p>
+      <p class="mt-1 text-sm text-slate-500" id="apiUrl">API URL will be shown here</p>
+    </div>
+  </div>
+  
+  <script>
+    // Display the configured API URL
+    document.getElementById('apiUrl').textContent = `Using API: ${config.API_URL}`;
+  </script>
+</body>
+</html>
