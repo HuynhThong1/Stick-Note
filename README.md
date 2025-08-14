@@ -11,6 +11,30 @@ A NestJS API service for adding sticky note annotations to PDF files.
 
 ## API Endpoints
 
+### GET /
+Returns basic service information and status.
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "timestamp": "2025-08-14T04:57:49.652Z",
+  "service": "Stick Note API",
+  "version": "1.0.0"
+}
+```
+
+### GET /health
+Health check endpoint for monitoring and deployment verification.
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-08-14T04:57:41.115Z"
+}
+```
+
 ### POST /pdf/annotate-upload
 
 Accepts a PDF file and annotation data, returns the annotated PDF.
