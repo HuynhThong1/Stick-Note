@@ -1,0 +1,59 @@
+# Node / NestJS project .gitignore
+# Dependencies
+node_modules/
+
+# Build output
+/dist/
+/build/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage & test
+coverage/
+.nyc_output/
+.jest-cache/
+.jest/*
+
+# TypeScript
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE/editor
+.vscode/
+.idea/
+*.iml
+
+# Docker
+.dockerignore
+.docker/
+
+# GitHub Actions artifacts
+*.artifact
+
+# Misc
+*.tgz
+*.zip
+
+# Public/static caches (if any)
+.next/
+.cache/
