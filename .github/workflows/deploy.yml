@@ -59,15 +59,20 @@ jobs:
   deploy-ssh:
     name: Deploy to server via SSH
     needs: build-and-push
-    if: ${{ secrets.SSH_HOST && secrets.SSH_USER && secrets.SSH_PRIVATE_KEY && secrets.GHCR_PAT }}
     runs-on: ubuntu-latest
     steps:
+      - name: Skip deploy (missing secrets)
+        if: ${{ !(secrets.SSH_HOST != '' && secrets.SSH_USER != '' && secrets.SSH_PRIVATE_KEY != '' && secrets.GHCR_PAT != '') }}
+        run: echo "Skipping deploy because one or more required secrets are not set (SSH_HOST, SSH_USER, SSH_PRIVATE_KEY, GHCR_PAT)."
+
       - name: Install SSH key
+        if: ${{ secrets.SSH_HOST != '' && secrets.SSH_USER != '' && secrets.SSH_PRIVATE_KEY != '' && secrets.GHCR_PAT != '' }}
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Add server to known_hosts
+        if: ${{ secrets.SSH_HOST != '' && secrets.SSH_USER != '' && secrets.SSH_PRIVATE_KEY != '' && secrets.GHCR_PAT != '' }}
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
@@ -75,6 +80,7 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
 
       - name: SSH and deploy container
+        if: ${{ secrets.SSH_HOST != '' && secrets.SSH_USER != '' && secrets.SSH_PRIVATE_KEY != '' && secrets.GHCR_PAT != '' }}
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
