@@ -10,6 +10,14 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import * as multer from 'multer';
+import { 
+  ApiTags, 
+  ApiOperation, 
+  ApiConsumes, 
+  ApiBody, 
+  ApiResponse,
+  ApiParam
+} from '@nestjs/swagger';
 import { PdfService } from './pdf.service';
 
 /**
@@ -25,11 +33,87 @@ import { PdfService } from './pdf.service';
  *   - noteText: string (contents of the sticky note)
  *   - author: string (optional author name)
  */
+@ApiTags('pdf')
 @Controller('pdf')
 export class PdfController {
   constructor(private readonly pdfService: PdfService) {}
 
   @Post('annotate-upload')
+  @ApiOperation({ 
+    summary: 'Thêm ghi chú sticky note vào file PDF',
+    description: 'Upload file PDF và thêm ghi chú sticky note với vị trí và nội dung tùy chỉnh'
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'File PDF và thông tin annotation',
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'File PDF cần thêm ghi chú'
+        },
+        page: {
+          type: 'number',
+          description: 'Số trang (bắt đầu từ 0)',
+          example: 0
+        },
+        x: {
+          type: 'number',
+          description: 'Tọa độ X (điểm dưới-trái)',
+          example: 100
+        },
+        y: {
+          type: 'number',
+          description: 'Tọa độ Y (điểm dưới-trái)',
+          example: 200
+        },
+        width: {
+          type: 'number',
+          description: 'Chiều rộng của ghi chú',
+          example: 30
+        },
+        height: {
+          type: 'number',
+          description: 'Chiều cao của ghi chú',
+          example: 30
+        },
+        noteText: {
+          type: 'string',
+          description: 'Nội dung ghi chú',
+          example: 'Ghi chú quan trọng'
+        },
+        author: {
+          type: 'string',
+          description: 'Tác giả ghi chú (tùy chọn)',
+          example: 'Nguyễn Văn A'
+        },
+        fileName: {
+          type: 'string',
+          description: 'Tên file PDF sau khi xử lý',
+          example: 'annotated.pdf'
+        }
+      },
+      required: ['file', 'page', 'x', 'y', 'noteText']
+    }
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'File PDF đã được thêm ghi chú thành công',
+    content: {
+      'application/pdf': {
+        schema: {
+          type: 'string',
+          format: 'binary'
+        }
+      }
+    }
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Lỗi: Không có file được upload hoặc dữ liệu không hợp lệ'
+  })
   @UseInterceptors(
     FileInterceptor('file', {
       storage: multer.memoryStorage(),
@@ -67,5 +151,99 @@ export class PdfController {
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     return res.send(Buffer.from(updatedPdf));
+  }
+
+  @Post('crop-by-coordinates')
+  @ApiOperation({ 
+    summary: 'Cắt PDF từ tọa độ x, y - bỏ trang từ đầu đến trang chứa tọa độ',
+    description: 'Upload file PDF và chỉ định tọa độ x, y. Tọa độ y được tính là tổng chiều cao của tất cả các trang từ đầu đến trang chứa tọa độ. API sẽ bỏ tất cả trang từ đầu đến trang chứa tọa độ đó, chỉ giữ lại các trang dưới.'
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'File PDF và thông tin cắt theo tọa độ',
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'File PDF cần cắt'
+        },
+        x: {
+          type: 'number',
+          description: 'Tọa độ X góc trái trên (tính từ góc trái trên của trang)',
+          example: 100
+        },
+        y: {
+          type: 'number',
+          description: 'Tọa độ Y (tổng chiều cao của tất cả trang từ đầu đến trang chứa tọa độ)',
+          example: 1200
+        },
+        fileName: {
+          type: 'string',
+          description: 'Tên file PDF sau khi cắt',
+          example: 'pages-below-coordinates.pdf'
+        }
+      },
+      required: ['file', 'x', 'y']
+    }
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'File PDF đã được cắt theo tọa độ thành công',
+    content: {
+      'application/pdf': {
+        schema: {
+          type: 'string',
+          format: 'binary'
+        }
+      }
+    }
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Lỗi: Không có file được upload, tọa độ không hợp lệ hoặc dữ liệu không đúng'
+  })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: multer.memoryStorage(),
+      limits: { fileSize: 20 * 1024 * 1024 },
+    }),
+  )
+  async cropPdfByCoordinates(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: any,
+    @Res() res: Response,
+  ) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+    
+    const x = parseFloat(body.x);
+    const y = parseFloat(body.y);
+    const fileName = body.fileName || 'pages-below-coordinates.pdf';
+    
+    if (isNaN(x) || isNaN(y)) {
+      throw new BadRequestException('Coordinates must be valid numbers');
+    }
+    
+    if (x < 0 || y < 0) {
+      throw new BadRequestException('Coordinates must be positive numbers');
+    }
+
+    try {
+      // Cắt PDF theo tọa độ sử dụng PdfService
+      const croppedPdf = await this.pdfService.cropPdfByCoordinates(
+        file.buffer,
+        x,
+        y,
+      );
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      return res.send(croppedPdf);
+    } catch (error) {
+      throw new BadRequestException(error instanceof Error ? error.message : String(error));
+    }
   }
 }

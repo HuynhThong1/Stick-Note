@@ -13,8 +13,13 @@
     "@nestjs/common": "*",
     "@nestjs/core": "*",
     "@nestjs/platform-express": "*",
+    "@nestjs/swagger": "^11.2.1",
     "annotpdf": "^1.0.11",
-    "multer": "*"
+    "canvas": "^3.2.0",
+    "multer": "*",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^5.4.296",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
