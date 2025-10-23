@@ -153,10 +153,10 @@ export class PdfController {
     return res.send(Buffer.from(updatedPdf));
   }
 
-  @Post('crop-by-coordinates')
+  @Post('cut-pdf-from-coordinates')
   @ApiOperation({ 
-    summary: 'Cắt PDF từ tọa độ x, y - bỏ trang từ đầu đến trang chứa tọa độ',
-    description: 'Upload file PDF và chỉ định tọa độ x, y. Tọa độ y được tính là tổng chiều cao của tất cả các trang từ đầu đến trang chứa tọa độ. API sẽ bỏ tất cả trang từ đầu đến trang chứa tọa độ đó, chỉ giữ lại các trang dưới.'
+    summary: 'Cắt PDF từ tọa độ x, y',
+    description: 'Upload file PDF và chỉ định tọa độ x, y. Tọa độ y được tính là tổng chiều cao của tất cả các trang từ đầu đến trang chứa tọa độ. API sẽ cắt PDF từ tọa độ đó, chỉ giữ lại các trang phía dưới tọa độ.'
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -182,7 +182,7 @@ export class PdfController {
         fileName: {
           type: 'string',
           description: 'Tên file PDF sau khi cắt',
-          example: 'pages-below-coordinates.pdf'
+          example: 'cut-from-coordinates.pdf'
         }
       },
       required: ['file', 'x', 'y']
@@ -190,7 +190,7 @@ export class PdfController {
   })
   @ApiResponse({
     status: 200,
-    description: 'File PDF đã được cắt theo tọa độ thành công',
+    description: 'File PDF đã được cắt từ tọa độ thành công',
     content: {
       'application/pdf': {
         schema: {
@@ -210,7 +210,7 @@ export class PdfController {
       limits: { fileSize: 20 * 1024 * 1024 },
     }),
   )
-  async cropPdfByCoordinates(
+  async cutPdfFromCoordinates(
     @UploadedFile() file: Express.Multer.File,
     @Body() body: any,
     @Res() res: Response,
@@ -221,7 +221,7 @@ export class PdfController {
     
     const x = parseFloat(body.x);
     const y = parseFloat(body.y);
-    const fileName = body.fileName || 'pages-below-coordinates.pdf';
+    const fileName = body.fileName || 'cut-from-coordinates.pdf';
     
     if (isNaN(x) || isNaN(y)) {
       throw new BadRequestException('Coordinates must be valid numbers');
@@ -232,8 +232,8 @@ export class PdfController {
     }
 
     try {
-      // Cắt PDF theo tọa độ sử dụng PdfService
-      const croppedPdf = await this.pdfService.cropPdfByCoordinates(
+      // Cắt PDF từ tọa độ sử dụng PdfService
+      const croppedPdf = await this.pdfService.cutPdfFromCoordinates(
         file.buffer,
         x,
         y,

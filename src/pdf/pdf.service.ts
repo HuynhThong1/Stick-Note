@@ -51,7 +51,7 @@ export class PdfService {
 
 
 
-  async cropPdfByCoordinates(pdfBuffer: Buffer, x: number, y: number): Promise<Buffer> {
+  async cutPdfFromCoordinates(pdfBuffer: Buffer, x: number, y: number): Promise<Buffer> {
     if (x < 0 || y < 0) throw new Error('Coordinates must be positive numbers');
 
     // Tìm trang chứa tọa độ
