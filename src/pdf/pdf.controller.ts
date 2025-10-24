@@ -68,4 +68,90 @@ export class PdfController {
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     return res.send(Buffer.from(updatedPdf));
   }
+
+  @Post('cut-pdf-from-coordinates')
+  @ApiOperation({ 
+    summary: 'Cắt PDF từ tọa độ x, y',
+    description: 'Upload file PDF và chỉ định tọa độ x, y. Tọa độ y được tính là tổng chiều cao của tất cả các trang từ đầu đến trang chứa tọa độ. API sẽ cắt PDF từ tọa độ đó, chỉ giữ lại các trang phía dưới tọa độ.'
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'File PDF và thông tin cắt theo tọa độ',
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'File PDF cần cắt'
+        },
+        x: {
+          type: 'number',
+          description: 'Tọa độ X góc trái trên (tính từ góc trái trên của trang)',
+          example: 100
+        },
+        y: {
+          type: 'number',
+          description: 'Tọa độ Y (tổng chiều cao của tất cả trang từ đầu đến trang chứa tọa độ)',
+          example: 1200
+        },
+        fileName: {
+          type: 'string',
+          description: 'Tên file PDF sau khi cắt',
+          example: 'cut-from-coordinates.pdf'
+        }
+      },
+      required: ['file', 'x', 'y']
+    }
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'File PDF đã được cắt từ tọa độ thành công',
+    content: {
+      'application/pdf': {
+        schema: {
+          type: 'string',
+          format: 'binary'
+        }
+      }
+    }
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Lỗi: Không có file được upload, tọa độ không hợp lệ hoặc dữ liệu không đúng'
+  })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: multer.memoryStorage(),
+      limits: { fileSize: 20 * 1024 * 1024 },
+    }),
+  )
+  async cutPdfFromCoordinates(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: any,
+    @Res() res: Response,
+  ) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+    
+    const x = parseFloat(body.x);
+    const y = parseFloat(body.y);
+    const fileName = body.fileName || 'cut-from-coordinates.pdf';
+
+    try {
+      // Cắt PDF từ tọa độ sử dụng PdfService
+      const croppedPdf = await this.pdfService.cutPdfFromCoordinates(
+        file.buffer,
+        x,
+        y,
+      );
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      return res.send(croppedPdf);
+    } catch (error) {
+      throw new BadRequestException(error instanceof Error ? error.message : String(error));
+    }
+  }
 }
